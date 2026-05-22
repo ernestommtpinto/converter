@@ -1,28 +1,44 @@
 const $ = selector => document.querySelector(selector);
 const $$ = selector => document.querySelectorAll(selector);
 
-const state = { category: CATEGORIES[0], filter: "all", pickerTarget: "to" };
+const state = {
+  category: CATEGORIES[0],
+  filter: "all",
+  pickerTarget: "to"
+};
+
 const fmt = new Intl.NumberFormat("pt-PT", { maximumFractionDigits: 6 });
 const moneyFmt = new Intl.NumberFormat("pt-PT", { maximumFractionDigits: 2 });
 
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
+  toggleBackButton(false);
   renderCategories();
   openCategory(CATEGORIES[0], false);
   renderHistory();
   renderRecent();
   bindEvents();
+  showHome();
 }
 
 function bindEvents() {
   $("#backBtn").addEventListener("click", showHome);
   $("#viewHistoryBtn").addEventListener("click", showHistory);
   $("#swapBtn").addEventListener("click", swapUnits);
-  $("#themeBtn").addEventListener("click", () => toast("Tema clean ativo"));
+  
+  $("#clearHistoryBtn").addEventListener("click", clearHistory);
 
-  $("#fromUnit").addEventListener("change", () => { updatePickerCards(); convert(); });
-  $("#toUnit").addEventListener("change", () => { updatePickerCards(); convert(); });
+  $("#fromUnit").addEventListener("change", () => {
+    updatePickerCards();
+    convert();
+  });
+
+  $("#toUnit").addEventListener("change", () => {
+    updatePickerCards();
+    convert();
+  });
+
   $("#amountInput").addEventListener("input", convert);
   $("#unitSearch").addEventListener("input", renderUnitList);
   $("#resultText").addEventListener("click", copyResult);
@@ -33,48 +49,49 @@ function bindEvents() {
   $("#pickerClose").addEventListener("click", closePicker);
   $("#pickerSearch").addEventListener("input", renderPickerOptions);
 
-  $$(".bottom-nav button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const tab = btn.dataset.tab;
+  $$(".bottom-nav button").forEach(button => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.tab;
+
       if (tab === "home") showHome();
       if (tab === "history") showHistory();
       if (tab === "convert") showConverter();
-      if (tab === "favorites") toast("Favoritos em breve");
     });
   });
 
-  $$(".history-filter button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      state.filter = btn.dataset.filter;
-      $$(".history-filter button").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+  $$(".history-filter button").forEach(button => {
+    button.addEventListener("click", () => {
+      state.filter = button.dataset.filter;
+      $$(".history-filter button").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
       renderHistory();
     });
   });
 }
 
 function renderCategories() {
-  $("#categoryGrid").innerHTML = CATEGORIES.map(cat => `
-    <button class="category-card ${cat.className}" data-id="${cat.id}" type="button">
-      <i class="bi ${cat.icon}"></i>
-      <strong>${cat.name}</strong>
-      <small>${cat.subtitle}</small>
+  $("#categoryGrid").innerHTML = CATEGORIES.map(category => `
+    <button class="category-card ${category.className}" data-id="${category.id}" type="button">
+      <i class="bi ${category.icon}"></i>
+      <strong>${category.name}</strong>
+      <small>${category.subtitle}</small>
       <span class="arrow"><i class="bi bi-chevron-right"></i></span>
     </button>
   `).join("");
 
   $$(".category-card").forEach(card => {
     card.addEventListener("click", () => {
-      const cat = CATEGORIES.find(item => item.id === card.dataset.id);
-      openCategory(cat, true);
+      const category = CATEGORIES.find(item => item.id === card.dataset.id);
+      openCategory(category, true);
     });
   });
 }
 
 function openCategory(category, navigate = true) {
   state.category = category;
+
   $("#pageTitle").textContent = category.name;
-  $("#pageSubtitle").textContent = "Select unit to convert";
+  $("#pageSubtitle").textContent = "Seleciona e converte";
   $("#categoryName").textContent = category.name;
   $("#categoryBadge").innerHTML = `<i class="bi ${category.icon}"></i>`;
 
@@ -87,11 +104,12 @@ function openCategory(category, navigate = true) {
 
   const keys = Object.keys(category.units);
   $("#fromUnit").value = category.base;
-  $("#toUnit").value = keys.find(k => k !== category.base) || category.base;
+  $("#toUnit").value = keys.find(key => key !== category.base) || category.base;
 
   updatePickerCards();
   renderUnitList();
   convert(false);
+
   if (navigate) showConverter();
 }
 
@@ -100,8 +118,11 @@ function showHome() {
   $("#converterScreen").classList.add("d-none");
   $("#historyScreen").classList.add("d-none");
   setActiveNav("home");
-  $("#pageTitle").textContent = "UnitMax";
-  $("#pageSubtitle").textContent = "Convert any unit";
+  toggleBackButton(false);
+
+  $("#pageTitle").textContent = "Converto";
+  $("#pageSubtitle").textContent = "Conversor inteligente";
+
   renderRecent();
 }
 
@@ -110,8 +131,10 @@ function showConverter() {
   $("#converterScreen").classList.remove("d-none");
   $("#historyScreen").classList.add("d-none");
   setActiveNav("convert");
+  toggleBackButton(true);
+
   $("#pageTitle").textContent = state.category.name;
-  $("#pageSubtitle").textContent = "Select unit to convert";
+  $("#pageSubtitle").textContent = "Seleciona e converte";
 }
 
 function showHistory() {
@@ -119,13 +142,18 @@ function showHistory() {
   $("#converterScreen").classList.add("d-none");
   $("#historyScreen").classList.remove("d-none");
   setActiveNav("history");
+  toggleBackButton(true);
+
   $("#pageTitle").textContent = "Histórico";
-  $("#pageSubtitle").textContent = "Recent conversions";
+  $("#pageSubtitle").textContent = "Conversões recentes";
+
   renderHistory();
 }
 
 function setActiveNav(tab) {
-  $$(".bottom-nav button").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+  $$(".bottom-nav button").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === tab);
+  });
 }
 
 async function convert(save = true) {
@@ -140,14 +168,23 @@ async function convert(save = true) {
   }
 
   let result;
-  if (category.id === "temperature") result = convertTemperature(amount, from, to);
-  else result = amount * category.units[from].factor / category.units[to].factor;
+
+  if (category.id === "temperature") {
+    result = convertTemperature(amount, from, to);
+  } else {
+    result = amount * category.units[from].factor / category.units[to].factor;
+  }
 
   $("#resultText").textContent = `${fmt.format(result)} ${to}`;
   $("#formulaText").textContent = `${amount} ${from} = ${fmt.format(result)} ${to}`;
 
   if (save) {
-    Store.addHistory({ category: category.id, label: category.name, input: `${amount} ${from}`, output: `${fmt.format(result)} ${to}` });
+    Store.addHistory({
+      category: category.id,
+      label: category.name,
+      input: `${amount} ${from}`,
+      output: `${fmt.format(result)} ${to}`
+    });
     renderRecent();
   }
 }
@@ -170,42 +207,54 @@ async function convertCurrency(amount, from, to, save = true) {
     $("#formulaText").textContent = `1 ${from} = ${fmt.format(data.rate)} ${to} · ${data.source}`;
 
     if (save) {
-      Store.addHistory({ category: "currency", label: "Currency", input: `${amount} ${from}`, output });
+      Store.addHistory({
+        category: "currency",
+        label: "Moedas",
+        input: `${amount} ${from}`,
+        output
+      });
       renderRecent();
     }
   } catch (error) {
     $("#resultText").textContent = "Erro";
-    $("#formulaText").textContent = "Falha ao obter taxa. Confirma internet ou tenta outra moeda.";
+    $("#formulaText").textContent = "Falha ao obter taxa. Confirma internet.";
   }
 }
 
 function convertTemperature(value, from, to) {
   let celsius;
+
   if (from === "c") celsius = value;
   if (from === "f") celsius = (value - 32) * 5 / 9;
   if (from === "k") celsius = value - 273.15;
+
   if (to === "c") return celsius;
   if (to === "f") return celsius * 9 / 5 + 32;
   if (to === "k") return celsius + 273.15;
+
   return value;
 }
 
 function swapUnits() {
-  const old = $("#fromUnit").value;
+  const oldValue = $("#fromUnit").value;
   $("#fromUnit").value = $("#toUnit").value;
-  $("#toUnit").value = old;
+  $("#toUnit").value = oldValue;
+
   updatePickerCards();
   convert();
 }
 
 function renderUnitList() {
   const query = ($("#unitSearch").value || "").toLowerCase();
-  const units = Object.entries(state.category.units)
-    .filter(([code, unit]) => unit.name.toLowerCase().includes(query) || code.toLowerCase().includes(query));
+
+  const units = Object.entries(state.category.units).filter(([code, unit]) => {
+    return unit.name.toLowerCase().includes(query) || code.toLowerCase().includes(query);
+  });
 
   $("#unitList").innerHTML = units.map(([code, unit]) => `
     <button class="unit-item" data-code="${code}" type="button">
-      <b>${unit.name}</b><span>${code}</span>
+      <b>${unit.name}</b>
+      <span>${code}</span>
     </button>
   `).join("");
 
@@ -221,9 +270,13 @@ function renderUnitList() {
 
 function renderRecent() {
   const list = Store.getHistory().slice(0, 4);
+
   $("#recentList").innerHTML = list.length ? list.map(item => `
     <div class="history-item">
-      <div><b>${item.input} → <strong>${item.output}</strong></b><br><small>${item.label} · ${item.date}</small></div>
+      <div>
+        <b>${item.input} → <strong>${item.output}</strong></b><br>
+        <small>${item.label} · ${item.date}</small>
+      </div>
       <i class="bi bi-chevron-right"></i>
     </div>
   `).join("") : `<div class="empty">Ainda não tens conversões.</div>`;
@@ -231,19 +284,29 @@ function renderRecent() {
 
 function renderHistory() {
   let list = Store.getHistory();
-  if (state.filter !== "all") list = list.filter(item => item.category === state.filter);
+
+  if (state.filter !== "all") {
+    list = list.filter(item => item.category === state.filter);
+  }
 
   $("#historyList").innerHTML = list.length ? list.map(item => `
     <div class="history-item">
-      <div><b>${item.input} → <strong>${item.output}</strong></b><br><small>${item.label} · ${item.date}</small></div>
-      <i class="bi bi-star"></i>
+      <div>
+        <b>${item.input} → <strong>${item.output}</strong></b><br>
+        <small>${item.label} · ${item.date}</small>
+      </div>
+      <i class="bi bi-clock"></i>
     </div>
   `).join("") : `<div class="empty">Sem histórico nesta categoria.</div>`;
 }
 
-function copyResult() {
-  const text = $("#resultText").textContent;
-  navigator.clipboard.writeText(text).then(() => toast("Resultado copiado"));
+function clearHistory() {
+  if (!confirm("Queres mesmo limpar o histórico?")) return;
+
+  Store.clearHistory();
+  renderHistory();
+  renderRecent();
+  toast("Histórico limpo");
 }
 
 function getUnitLabel(code) {
@@ -264,10 +327,13 @@ function updatePickerCards() {
 
 function openPicker(target) {
   state.pickerTarget = target;
+
   $("#pickerTitle").textContent = target === "from" ? "Selecionar origem" : "Selecionar destino";
   $("#pickerSearch").value = "";
   $("#pickerModal").classList.remove("d-none");
+
   renderPickerOptions();
+
   setTimeout(() => $("#pickerSearch").focus(), 120);
 }
 
@@ -279,8 +345,9 @@ function renderPickerOptions() {
   const query = ($("#pickerSearch").value || "").toLowerCase();
   const selected = state.pickerTarget === "from" ? $("#fromUnit").value : $("#toUnit").value;
 
-  const options = Object.entries(state.category.units)
-    .filter(([code, unit]) => unit.name.toLowerCase().includes(query) || code.toLowerCase().includes(query));
+  const options = Object.entries(state.category.units).filter(([code, unit]) => {
+    return unit.name.toLowerCase().includes(query) || code.toLowerCase().includes(query);
+  });
 
   $("#pickerOptions").innerHTML = options.map(([code, unit]) => `
     <button class="picker-option ${code === selected ? "active" : ""}" data-code="${code}" type="button">
@@ -296,6 +363,7 @@ function renderPickerOptions() {
     button.addEventListener("click", () => {
       const select = state.pickerTarget === "from" ? $("#fromUnit") : $("#toUnit");
       select.value = button.dataset.code;
+
       updatePickerCards();
       convert();
       closePicker();
@@ -303,10 +371,19 @@ function renderPickerOptions() {
   });
 }
 
+function copyResult() {
+  const text = $("#resultText").textContent;
+  navigator.clipboard.writeText(text).then(() => toast("Resultado copiado"));
+}
+
+function toggleBackButton(show) {
+  $("#backBtn").classList.toggle("back-hidden", !show);
+}
 
 function toast(message) {
-  const el = $("#toast");
-  el.textContent = message;
-  el.classList.add("show");
-  setTimeout(() => el.classList.remove("show"), 1600);
+  const element = $("#toast");
+  element.textContent = message;
+  element.classList.add("show");
+
+  setTimeout(() => element.classList.remove("show"), 1600);
 }

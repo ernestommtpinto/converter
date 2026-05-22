@@ -1,9 +1,9 @@
 {
-  "name": "UnitMax",
-  "short_name": "UnitMax",
+  "name": "Converto",
+  "short_name": "Converto",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f7fbfa",
+  "background_color": "#fff7e8",
   "theme_color": "#00a99d",
   "icons": []
 }

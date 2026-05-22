@@ -8,8 +8,7 @@ const CurrencyAPI = {
           if (typeof data.result === "number") {
             return {
               result: data.result,
-              rate: data.info && typeof data.info.quote === "number" ? data.info.quote : data.result / amount,
-              date: data.date || "hoje"
+              rate: data.info && typeof data.info.quote === "number" ? data.info.quote : data.result / amount
             };
           }
           return null;
@@ -23,8 +22,7 @@ const CurrencyAPI = {
           if (typeof rate === "number") {
             return {
               result: amount * rate,
-              rate,
-              date: data.time_last_update_utc || "hoje"
+              rate
             };
           }
           return null;
@@ -35,19 +33,13 @@ const CurrencyAPI = {
     for (const endpoint of endpoints) {
       try {
         const response = await fetch(endpoint.url, { cache: "no-store" });
-
-        if (!response.ok) {
-          throw new Error(`${endpoint.name} HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(endpoint.name);
 
         const data = await response.json();
         const parsed = endpoint.parse(data);
 
-        if (parsed && typeof parsed.result === "number" && typeof parsed.rate === "number") {
-          return {
-            ...parsed,
-            source: endpoint.name
-          };
+        if (parsed && typeof parsed.result === "number") {
+          return { ...parsed, source: endpoint.name };
         }
       } catch (error) {
         console.warn(error);
