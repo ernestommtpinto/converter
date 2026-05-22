@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UnitMax | Conversor de Unidades</title>
+  <meta name="theme-color" content="#00a99d">
+  <link rel="manifest" href="manifest.json">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <main class="phone">
+    <header class="app-header">
+      <button class="icon-btn" id="backBtn"><i class="bi bi-chevron-left"></i></button>
+      <div>
+        <h1 id="pageTitle">UnitMax</h1>
+        <p id="pageSubtitle">Convert any unit</p>
+      </div>
+      <button class="icon-btn" id="themeBtn"><i class="bi bi-stars"></i></button>
+    </header>
+
+    <section class="hero" id="homeScreen">
+      <div class="hero-copy">
+        <h2>Convert<br>Any<br>Unit</h2>
+        <p>Quick, easy, and accurate conversions.</p>
+      </div>
+
+      <div class="category-grid" id="categoryGrid"></div>
+
+      <section class="recent-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h3>Conversões recentes</h3>
+          <button class="link-btn" id="viewHistoryBtn">Ver todas</button>
+        </div>
+        <div id="recentList"></div>
+      </section>
+    </section>
+
+    <section class="converter-screen d-none" id="converterScreen">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input id="unitSearch" type="search" placeholder="Search or select the unit to convert">
+      </div>
+
+      <div class="selected-panel">
+        <div>
+          <span class="tiny">Categoria</span>
+          <h2 id="categoryName">Length</h2>
+        </div>
+        <div class="category-badge" id="categoryBadge"><i class="bi bi-rulers"></i></div>
+      </div>
+
+      <div class="convert-card">
+        <label>Valor</label>
+        <input id="amountInput" class="main-input" type="number" value="100" inputmode="decimal" placeholder="0">
+
+        <div class="unit-row">
+          <select id="fromUnit" class="native-select"></select>
+          <select id="toUnit" class="native-select"></select>
+
+          <button class="select-card" id="fromPicker" type="button">
+            <span class="select-label">De</span>
+            <strong>—</strong>
+            <small>Selecionar</small>
+          </button>
+
+          <button id="swapBtn" class="swap-btn" type="button"><i class="bi bi-arrow-left-right"></i></button>
+
+          <button class="select-card" id="toPicker" type="button">
+            <span class="select-label">Para</span>
+            <strong>—</strong>
+            <small>Selecionar</small>
+          </button>
+        </div>
+
+        <div class="result-box">
+          <span>Resultado</span>
+          <strong id="resultText">—</strong>
+          <small id="formulaText">Escolhe unidades</small>
+        </div>
+      </div>
+
+      <div class="unit-list" id="unitList"></div>
+    </section>
+
+    <section class="history-screen d-none" id="historyScreen">
+      <div class="history-filter">
+        <button class="active" data-filter="all">Todos</button>
+        <button data-filter="currency">Moedas</button>
+        <button data-filter="length">Length</button>
+        <button data-filter="weight">Weight</button>
+        <button data-filter="temperature">Temp</button>
+        <button data-filter="area">Area</button>
+      </div>
+      <div id="historyList"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="active" data-tab="home"><i class="bi bi-house-fill"></i><span>Início</span></button>
+    <button data-tab="history"><i class="bi bi-clock-history"></i><span>Histórico</span></button>
+    <button class="center-action" data-tab="convert"><i class="bi bi-arrow-left-right"></i></button>
+    <button data-tab="favorites"><i class="bi bi-star"></i><span>Favoritos</span></button>
+  </nav>
+
+  <div class="picker-modal d-none" id="pickerModal">
+    <div class="picker-backdrop" id="pickerBackdrop"></div>
+    <section class="picker-sheet">
+      <div class="picker-handle"></div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h2 id="pickerTitle">Selecionar</h2>
+          <p>Pesquisa e escolhe uma unidade</p>
+        </div>
+        <button class="picker-close" id="pickerClose" type="button"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="picker-search">
+        <i class="bi bi-search"></i>
+        <input id="pickerSearch" type="search" placeholder="Pesquisar...">
+      </div>
+      <div id="pickerOptions" class="picker-options"></div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast-msg"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
